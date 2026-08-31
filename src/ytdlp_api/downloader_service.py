@@ -28,11 +28,15 @@ def get_cookie_file() -> str | None:
 
 
 def base_ydl_opts() -> dict:
-    opts = {}
+    opts = {
+        'verbose': True,
+    }
+    
     cookie_file = get_cookie_file()
-
+    
     if cookie_file:
-        opts["cookiefile"] = cookie_file 
+        opts["cookiefile"] = cookie_file
+        
     return opts
 
 def verify_correct_format(download_type: str, file_format: str) -> None:

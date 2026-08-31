@@ -1,6 +1,6 @@
 FROM python:3.11-slim
 
-RUN apt-get update && apt-get install -y --no-install-recommends ffmpeg curl unzip && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y --no-install-recommends ffmpeg curl unzip git && rm -rf /var/lib/apt/lists/*
 
 RUN curl -fsSL https://deno.land/install.sh | sh
 ENV PATH="/root/.deno/bin:$PATH"
@@ -8,6 +8,12 @@ ENV PATH="/root/.deno/bin:$PATH"
 RUN useradd -m -u 1000 user
 USER user
 ENV PATH="/home/user/.local/bin:/root/.deno/bin:$PATH"
+
+WORKDIR /home/user
+
+RUN git clone --single-branch --branch 1.3.2 https://github.com/Brainicism/bgutil-ytdlp-pot-provider.git \
+    && cd bgutil-ytdlp-pot-provider/server \
+    && deno install --allow-scripts=npm:canvas --frozen
 
 WORKDIR /home/user/app
 
