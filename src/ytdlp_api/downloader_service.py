@@ -7,6 +7,13 @@ from yt_dlp import YoutubeDL
 
 from .DownloadRequest import DownloadRequest, VIDEO_FORMATS, VIDEO_QUALITY_FORMATS, AUDIO_FORMATS
 
+COOKIE_FILE = os.environ.get("YTDLP_COOKIE_FILE", "/etc/secrets/cookies.txt")
+
+def base_ydl_opts() -> dict:
+    opts = {}
+    if os.path.exists(COOKIE_FILE):
+        opts["cookiefile"] = COOKIE_FILE
+    return opts
 
 def verify_correct_format(download_type: str, file_format: str) -> None:
     if download_type == "video" and file_format in VIDEO_FORMATS:
@@ -35,14 +42,16 @@ def cleanup_files(work_dir: str) -> None:
 def build_audio_opts(request: DownloadRequest) -> dict:
     verify_correct_format(request.download_type, request.file_format)
 
-    return {
+    opts = base_ydl_opts()
+    opts.update({
         'format': 'bestaudio/best',
         'postprocessors': [{
             'key': 'FFmpegExtractAudio',
             'preferredcodec': request.file_format,
             'preferredquality': '192',
         }],
-    }
+    })
+    return opts
 
 
 def build_video_opts(request: DownloadRequest) -> dict:
@@ -70,13 +79,15 @@ def build_video_opts(request: DownloadRequest) -> dict:
         else:
             format_selector = "bestvideo+bestaudio/best"
 
-    return {
+    opts = base_ydl_opts()
+    opts.update({
         'format': format_selector,
         'postprocessors': [{
             'key': 'FFmpegVideoConvertor',
             'preferedformat': request.file_format,
         }],
-    }
+    })
+    return opts
 
 
 def add_metadata_config(ydl_opts: dict) -> dict:
@@ -129,7 +140,7 @@ def get_youtube_url_info(url: str):
         raise HTTPException(status_code=400, detail="No valid URL was provided")
 
     try:
-        with YoutubeDL() as ydl:
+        with YoutubeDL(base_ydl_opts()) as ydl:
             info = ydl.extract_info(url, download=False)
             return ydl.sanitize_info(info)
     except HTTPException:
