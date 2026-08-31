@@ -10,7 +10,7 @@ WORKDIR /home/user/app
 
 RUN pip install --no-cache-dir --user uv
 
-COPY --chown=user pyproject.toml uv.lock ./
+COPY --chown=user pyproject.toml uv.lock README.md ./
 RUN uv sync --frozen --no-dev --no-install-project
 
 COPY --chown=user src ./src
