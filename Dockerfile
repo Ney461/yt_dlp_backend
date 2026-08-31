@@ -2,12 +2,13 @@ FROM python:3.11-slim
 
 RUN apt-get update && apt-get install -y --no-install-recommends ffmpeg curl unzip git && rm -rf /var/lib/apt/lists/*
 
+ENV DENO_INSTALL=/usr/local
 RUN curl -fsSL https://deno.land/install.sh | sh
-ENV PATH="/root/.deno/bin:$PATH"
+ENV PATH="/usr/local/bin:$PATH"
 
 RUN useradd -m -u 1000 user
 USER user
-ENV PATH="/home/user/.local/bin:/root/.deno/bin:$PATH"
+ENV PATH="/home/user/.local/bin:/usr/local/bin:$PATH"
 
 WORKDIR /home/user
 
