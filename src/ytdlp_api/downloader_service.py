@@ -7,12 +7,32 @@ from yt_dlp import YoutubeDL
 
 from .DownloadRequest import DownloadRequest, VIDEO_FORMATS, VIDEO_QUALITY_FORMATS, AUDIO_FORMATS
 
-COOKIE_FILE = os.environ.get("YTDLP_COOKIE_FILE", "/etc/secrets/cookies.txt")
+SECRET_COOKIE_FILE  = os.environ.get("YTDLP_COOKIE_FILE", "/etc/secrets/cookies.txt")
+_writable_cookie_file = None
+
+def get_cookie_file() -> str | None:
+    global _writable_cookie_file
+    
+    if _writable_cookie_file is not None:
+        return _writable_cookie_file
+    
+    if not os.path.exists(SECRET_COOKIE_FILE):
+        return None
+    
+    tmp_dir = tempfile.mkdtemp(prefix="cookies_")
+    dest = os.path.join(tmp_dir, "cookies.txt")
+    shutil.copy(SECRET_COOKIE_FILE, dest)
+    _writable_cookie_file = dest
+    
+    return _writable_cookie_file
+
 
 def base_ydl_opts() -> dict:
     opts = {}
-    if os.path.exists(COOKIE_FILE):
-        opts["cookiefile"] = COOKIE_FILE
+    cookie_file = get_cookie_file()
+
+    if cookie_file:
+        opts["cookiefile"] = cookie_file 
     return opts
 
 def verify_correct_format(download_type: str, file_format: str) -> None:
