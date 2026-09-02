@@ -1,5 +1,6 @@
 import os
 import shutil
+import base64
 import tempfile
 
 from fastapi import HTTPException
@@ -12,18 +13,30 @@ _writable_cookie_file = None
 
 def get_cookie_file() -> str | None:
     global _writable_cookie_file
-    
+
     if _writable_cookie_file is not None:
         return _writable_cookie_file
-    
-    if not os.path.exists(SECRET_COOKIE_FILE):
+
+    chunks = []
+    i = 1
+    while True:
+        chunk = os.environ.get(f"YTDLP_COOKIE_B64_{i}")
+        if not chunk:
+            break
+        chunks.append(chunk)
+        i += 1
+
+    if not chunks:
         return None
-    
+
+    cookie_b64 = "".join(chunks)
+
     tmp_dir = tempfile.mkdtemp(prefix="cookies_")
     dest = os.path.join(tmp_dir, "cookies.txt")
-    shutil.copy(SECRET_COOKIE_FILE, dest)
+    with open(dest, "wb") as f:
+        f.write(base64.b64decode(cookie_b64))
     _writable_cookie_file = dest
-    
+
     return _writable_cookie_file
 
 

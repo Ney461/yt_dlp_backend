@@ -7,6 +7,9 @@ RUN curl -fsSL https://deno.land/install.sh | sh
 ENV PATH="/usr/local/bin:$PATH"
 
 RUN useradd -m -u 1000 user
+
+RUN mkdir -p /home/user/app && chown -R user:user /home/user/app
+
 USER user
 ENV PATH="/home/user/.local/bin:/usr/local/bin:$PATH"
 
