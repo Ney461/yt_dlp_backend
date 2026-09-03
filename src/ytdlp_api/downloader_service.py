@@ -1,12 +1,46 @@
 import os
 import shutil
 import tempfile
+import uuid
 
 from fastapi import HTTPException
 from yt_dlp import YoutubeDL
 
-from .download_request import DownloadRequest, VIDEO_FORMATS, VIDEO_QUALITY_FORMATS, AUDIO_FORMATS
+from .download_request import DownloadRequest, VideoInfoResponse, VIDEO_FORMATS, VIDEO_QUALITY_FORMATS, AUDIO_FORMATS
 
+JOBS: dict[str, dict] = {}
+
+def update_job_progress(job_id: str, data: dict) -> None:
+    if job_id not in JOBS:
+        return
+
+    status = data.get("status")
+
+    if status == "downloading":
+        total = data.get("total_bytes") or data.get("total_bytes_estimate") or 0
+        downloaded = data.get("downloaded_bytes", 0)
+        percent = (downloaded / total * 100) if total else 0
+
+        JOBS[job_id].update({
+            "status": "downloading",
+            "percent": round(percent, 1),
+            "speed": data.get("speed"),
+            "eta": data.get("eta"),
+        })
+
+    elif status == "finished":
+        JOBS[job_id].update({
+            "status": "processing",
+            "percent": 100,
+        })
+
+
+def update_job_error(job_id: str, error: object) -> None:
+    if job_id in JOBS:
+        JOBS[job_id].update({
+            "status": "error",
+            "error": str(error),
+        })
 
 def verify_correct_format(download_type: str, file_format: str) -> None:
     if download_type == "video" and file_format in VIDEO_FORMATS:
@@ -36,12 +70,13 @@ def build_audio_opts(request: DownloadRequest) -> dict:
     verify_correct_format(request.download_type, request.file_format)
 
     return {
-        'format': 'bestaudio/best',
+        'format': 'bestaudio[ext=m4a]/bestaudio/best',
         'postprocessors': [{
             'key': 'FFmpegExtractAudio',
             'preferredcodec': request.file_format,
             'preferredquality': '192',
         }],
+        'verbose': True,
     }
 
 
@@ -63,7 +98,7 @@ def build_video_opts(request: DownloadRequest) -> dict:
             )
 
         info_url = get_youtube_url_info(request.url)
-        max_quality_int = int(info_url.get("height") or 0)
+        max_quality_int = info_url.max_height or 0
 
         if max_quality_int > 0 and selected_quality_int <= max_quality_int:
             format_selector = f"bestvideo[height<={selected_quality_int}]+bestaudio/best[height<={selected_quality_int}]"
@@ -90,7 +125,7 @@ def add_metadata_config(ydl_opts: dict) -> dict:
     return ydl_opts
 
 
-def process_youtube_download(request: DownloadRequest) -> tuple[str, str]:
+def process_youtube_download(request: DownloadRequest, job_id: str | None = None) -> tuple[str, str]:
     work_dir = tempfile.mkdtemp(prefix="ytdl_")
 
     try:
@@ -100,6 +135,10 @@ def process_youtube_download(request: DownloadRequest) -> tuple[str, str]:
             ydl_opts = build_video_opts(request)
 
         ydl_opts['outtmpl'] = os.path.join(work_dir, '%(title)s.%(ext)s')
+        if job_id:
+            ydl_opts['progress_hooks'] = [
+                lambda data: update_job_progress(job_id, data)
+            ]
 
         if request.metadata:
             ydl_opts = add_metadata_config(ydl_opts)
@@ -112,6 +151,14 @@ def process_youtube_download(request: DownloadRequest) -> tuple[str, str]:
 
             if not os.path.exists(generated_filename):
                 raise HTTPException(status_code=400, detail="The file could not be generated.")
+
+        if job_id:
+            JOBS[job_id].update({
+                "status": "finished",
+                "percent": 100,
+                "filename": generated_filename,
+                "work_dir": work_dir,
+            })
 
         return generated_filename, work_dir
 
@@ -131,7 +178,20 @@ def get_youtube_url_info(url: str):
     try:
         with YoutubeDL() as ydl:
             info = ydl.extract_info(url, download=False)
-            return ydl.sanitize_info(info)
+            
+            video_formats = [
+                f for f in info.get("formats", [])
+                if f.get("vcodec") != "none" and f.get("height")
+            ]
+
+            max_height = max((f["height"] for f in video_formats), default=None)
+
+            return VideoInfoResponse(
+                title=info.get("title", "Desconocido"),
+                duration=info.get("duration", 0),
+                max_height=max_height,
+                thumbnail=info.get("thumbnail")
+            )
     except HTTPException:
         raise
     except Exception as e:

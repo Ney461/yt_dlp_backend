@@ -3,7 +3,7 @@ import tkinter as tk
 from utils.styles import LABEL_STYLE, CHECKBUTTON_STYLE
 from utils.colors import MAIN_BG
 from components.styled_select import StyledSelect
-from utils.download_options import AUDIO_FORMATS, VIDEO_FORMATS, VIDEO_QUALITY_FORMATS
+from utils.download_options import AUDIO_FORMATS, VIDEO_FORMATS, VIDEO_QUALITY_FORMATS, get_available_qualities
 
 class DownloadOptions(tk.Frame):
     
@@ -44,6 +44,7 @@ class DownloadOptions(tk.Frame):
         )
         self.format_selector.grid(row=1, column=1, sticky="w")
 
+
         self.quality_label = tk.Label(
             self,
             text="Calidad:",
@@ -53,10 +54,11 @@ class DownloadOptions(tk.Frame):
 
         self.quality_selector = StyledSelect(
             self,
-            values=VIDEO_QUALITY_FORMATS,
-            default=VIDEO_QUALITY_FORMATS[-1]
+            values=[str(q) for q in VIDEO_QUALITY_FORMATS],
+            default=str(VIDEO_QUALITY_FORMATS[-1])
         )
         self.quality_selector.grid(row=2, column=1, sticky="w")
+
 
         self.metadata_label = tk.Label(
             self,
@@ -74,12 +76,14 @@ class DownloadOptions(tk.Frame):
         self.metadata_checkbutton.grid(row=3, column=1, sticky="w")
         self._handle_type_change(self.type_selector.get_value())
 
+
     def _handle_type_change(self, download_type):
         is_video = download_type == "Video"
         self._update_format_options(is_video)
         self._set_quality_visibility(is_video)
 
     def _update_format_options(self, is_video):
+        
         formats = VIDEO_FORMATS if is_video else AUDIO_FORMATS
         self.format_selector.set_values(formats, formats[0])
 
@@ -93,12 +97,17 @@ class DownloadOptions(tk.Frame):
 
     def get_options(self):
         return {
-            "type": self.type_selector.get_value(),
-            "format": self.format_selector.get_value(),
-            "quality": self.quality_selector.get_value() if self._is_video() else None,
+            "download_type": self.type_selector.get_value().lower(),
+            "file_format": self.format_selector.get_value(),
+            "quality": self.quality_selector.get_value() if self._is_video() else "best",
             "metadata": self.metadata_checked.get(),
         }
 
     def _is_video(self):
         return self.type_selector.get_value() == "Video"
         
+    def update_qualities(self, max_height):
+        qualities = get_available_qualities(max_height)
+        qualities.append("best")
+
+        self.quality_selector.set_values(qualities, "best")

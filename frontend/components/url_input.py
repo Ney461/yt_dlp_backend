@@ -1,9 +1,12 @@
 import tkinter as tk
 from tkinter import ttk
 
+import requests
+
 from utils.colors import MAIN_BG
 from utils.styles import LABEL_STYLE
 from components.styled_button import StyledButton
+from services.api_client import get_video_info
 
 
 class UrlInput(tk.Frame):
@@ -15,6 +18,8 @@ class UrlInput(tk.Frame):
             padx=5,
             pady=20
         )
+
+        self.on_submit = on_submit
 
         self.label = tk.Label(
             self,
@@ -48,7 +53,7 @@ class UrlInput(tk.Frame):
         self.button = StyledButton(
             self,
             "Obtener Información",
-            command=on_submit,
+            command=self.search_info,
         )
         self.button.grid(
             row=0,
@@ -58,3 +63,16 @@ class UrlInput(tk.Frame):
 
     def get_url(self):
         return self.entry.get().strip()
+
+    def search_info(self):
+        try:
+            response = get_video_info(self.get_url())
+        except requests.exceptions.RequestException:
+            return
+
+        if response.status_code == 200:
+            if self.on_submit:
+                self.on_submit(response.json())
+                
+    def clear(self):
+        self.entry.delete(0, tk.END)
