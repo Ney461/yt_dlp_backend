@@ -1,7 +1,7 @@
 import tkinter as tk
 
-from utils.STYLES import LABEL_STYLE
-from utils.COLORS import MAIN_BG
+from utils.styles import LABEL_STYLE
+from utils.colors import MAIN_BG
 
 class VideoInfo(tk.Frame):
     
@@ -11,18 +11,18 @@ class VideoInfo(tk.Frame):
             bg=MAIN_BG
         )
 
-        self.lbTitle = tk.Label(
+        self.title_label = tk.Label(
             self,
             text="Título:",
             **LABEL_STYLE
         )
-        self.lbTitle.pack(anchor="w")
+        self.title_label.pack(anchor="w")
         
 
-        self.lbTitleInput = tk.Label(
+        self.duration_label = tk.Label(
             self,
             text="Duración:",
             **LABEL_STYLE
         )
-        self.lbTitleInput.pack(anchor="w")
+        self.duration_label.pack(anchor="w")
         

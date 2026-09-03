@@ -1,23 +1,20 @@
 import tkinter as tk
 from tkinter import ttk
 
-from utils.STYLES import setup_combobox_style
-from utils.COLORS import MAIN_BG, WHITE, HEADER_BG
+from utils.styles import setup_combobox_style
+from utils.colors import MAIN_BG, WHITE, HEADER_BG
 
 
 class StyledSelect(tk.Frame):
 
+    _styles_configured = False
+
     def __init__(self, parent, values=None, default=None, command=None):
         super().__init__(parent, bg=MAIN_BG, pady=5)
 
-        setup_combobox_style()
+        self._configure_styles()
 
-        self.option_add("*TCombobox*Listbox.background", HEADER_BG)
-        self.option_add("*TCombobox*Listbox.foreground", WHITE)
-        self.option_add("*TCombobox*Listbox.selectBackground", MAIN_BG)
-        self.option_add("*TCombobox*Listbox.selectForeground", WHITE)
-
-        self.variable = tk.StringVar()
+        self.variable = tk.StringVar(value="")
 
         self.combo = ttk.Combobox(
             self,
@@ -34,12 +31,22 @@ class StyledSelect(tk.Frame):
         if default:
             self.variable.set(default)
 
-        self.userCommand = command
+        self.user_command = command
+
+    def _configure_styles(self):
+        if not StyledSelect._styles_configured:
+            setup_combobox_style()
+            StyledSelect._styles_configured = True
+
+        self.option_add("*TCombobox*Listbox.background", HEADER_BG)
+        self.option_add("*TCombobox*Listbox.foreground", WHITE)
+        self.option_add("*TCombobox*Listbox.selectBackground", MAIN_BG)
+        self.option_add("*TCombobox*Listbox.selectForeground", WHITE)
 
     def _on_select(self, event):
         self.combo.selection_clear()
-        if self.userCommand:
-            self.userCommand(self.variable.get())
+        if self.user_command:
+            self.user_command(self.get_value())
 
     def _style_popdown(self, event=None):
         popdown = self.combo.tk.eval(f"ttk::combobox::PopdownWindow {self.combo}")
@@ -75,12 +82,20 @@ class StyledSelect(tk.Frame):
                 "-highlightthickness", 0
             )
         except tk.TclError:
+            pass
+
+        try:
             self.combo.tk.call(scrollbar, "configure", "-style", "Custom.Vertical.TScrollbar")
         except tk.TclError:
             pass
 
-    def get(self):
+    def set_values(self, values, default=None):
+        self.combo.configure(values=values)
+        if default is not None:
+            self.set_value(default)
+
+    def get_value(self):
         return self.variable.get()
 
-    def set(self, value):
+    def set_value(self, value):
         self.variable.set(value)

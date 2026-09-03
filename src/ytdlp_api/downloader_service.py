@@ -5,7 +5,7 @@ import tempfile
 from fastapi import HTTPException
 from yt_dlp import YoutubeDL
 
-from .DownloadRequest import DownloadRequest, VIDEO_FORMATS, VIDEO_QUALITY_FORMATS, AUDIO_FORMATS
+from .download_request import DownloadRequest, VIDEO_FORMATS, VIDEO_QUALITY_FORMATS, AUDIO_FORMATS
 
 
 def verify_correct_format(download_type: str, file_format: str) -> None:

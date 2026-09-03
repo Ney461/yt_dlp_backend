@@ -1,6 +1,6 @@
 import tkinter as tk
-from utils.COLORS import MAIN_BG, ACCENT_COLOR
-from utils.FONTS import FONT_LABEL
+from utils.colors import MAIN_BG, ACCENT_COLOR
+from utils.fonts import FONT_LABEL
 
 
 class Section(tk.LabelFrame):

@@ -4,7 +4,7 @@ from fastapi import FastAPI, BackgroundTasks
 from fastapi.responses import FileResponse
 from fastapi.concurrency import run_in_threadpool
 
-from .DownloadRequest import DownloadRequest, InfoUrlRequest
+from .download_request import DownloadRequest, InfoUrlRequest
 from .downloader_service import process_youtube_download, cleanup_files, get_youtube_url_info
 
 PATH = "/api"

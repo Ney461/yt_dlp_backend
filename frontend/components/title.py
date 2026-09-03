@@ -1,6 +1,6 @@
 import tkinter as tk
-from utils.COLORS import *
-from utils.STYLES import TITLE_STYLE
+from utils.colors import HEADER_BG
+from utils.styles import TITLE_STYLE
 
 
 class Title(tk.Frame):

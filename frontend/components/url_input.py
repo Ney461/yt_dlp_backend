@@ -1,14 +1,14 @@
 import tkinter as tk
 from tkinter import ttk
 
-from utils.COLORS import *
-from utils.STYLES import LABEL_STYLE
-from .button import ButtonC
+from utils.colors import MAIN_BG
+from utils.styles import LABEL_STYLE
+from components.styled_button import StyledButton
 
 
 class UrlInput(tk.Frame):
 
-    def __init__(self, parent):
+    def __init__(self, parent, on_submit=None):
         super().__init__(
             parent,
             bg=MAIN_BG,
@@ -45,12 +45,16 @@ class UrlInput(tk.Frame):
             pady=10
         )
 
-        self.button = ButtonC(
+        self.button = StyledButton(
             self,
-            "Obtener Información"
+            "Obtener Información",
+            command=on_submit,
         )
         self.button.grid(
             row=0,
             column=2,
             padx=(0, 5)
         )
+
+    def get_url(self):
+        return self.entry.get().strip()

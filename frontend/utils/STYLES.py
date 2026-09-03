@@ -1,7 +1,7 @@
 from tkinter import ttk
 
-from utils.COLORS import *
-from utils.FONTS import *
+from utils.colors import ACCENT_COLOR, BUTTON_ACT_BG, BUTTON_BG, HEADER_BG, MAIN_BG, WHITE
+from utils.fonts import FONT_BUTTON, FONT_LABEL, FONT_TITLE
 
 
 LABEL_STYLE = {
